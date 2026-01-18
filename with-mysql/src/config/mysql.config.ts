@@ -1,8 +1,9 @@
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { User } from "src/users/entities/user.entity";
+import { Post } from "src/posts/entities/post.entity";
 
 export const mysql = {
-    import: [ConfigModule],
+    imports: [ConfigModule],
     inject: [ConfigService],
     useFactory: (configService: ConfigService) => ({
         type: 'mysql' as const,
@@ -11,7 +12,7 @@ export const mysql = {
         username: configService.get('DATABASE_USER'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_NAME'),
-        entities: [User],
+        entities: [User, Post],
         synchronize: configService.get('NODE_ENV') !== 'production',
     }),
 }

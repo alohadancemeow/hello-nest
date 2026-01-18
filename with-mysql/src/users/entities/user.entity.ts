@@ -8,6 +8,7 @@ export class User {
     id: number;
 
     @Column()
+    @IsNotEmpty()
     name: string;
 
     @Column({ unique: true })
