@@ -18,15 +18,29 @@ export class PostsService {
   }
 
   async findAll() {
-    return await this.postsRepository.find();
+    return await this.postsRepository.find({
+      relations: ['author'],
+    });
   }
 
   async findOne(id: number) {
-    return await this.postsRepository.findOne({
-      where: {
-        id,
-      },
-    });
+
+    try {
+      const post = await this.postsRepository.findOne({
+        where: {
+          id,
+        },
+        relations: ['author'],
+      });
+
+      if (!post) {
+        throw new NotFoundException(`Post with id ${id} not found`);
+      }
+
+      return post;
+    } catch (error) {
+      throw new NotFoundException(`Post with id ${id} not found`);
+    }
   }
 
   async update(id: number, updatePostDto: UpdatePostDto) {
