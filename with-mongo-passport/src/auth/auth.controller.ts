@@ -1,6 +1,7 @@
-import { Controller, Post, UseGuards, Request, Res } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Res, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './local-auth.guard';
+import { GoogleAuthGuard } from './google-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -14,6 +15,24 @@ export class AuthController {
     // Set the access_token cookie
     res.cookie('access_token', token.access_token, { httpOnly: true });
     return { message: 'Login successful' };
+  }
+
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuth(@Request() req) {
+    // Initiates the Google OAuth process
+  }
+
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  async googleAuthRedirect(@Request() req, @Res({ passthrough: true }) res) {
+    const { accessToken } = await this.authService.googleLogin(req);
+
+    // console.log('accessToken', accessToken);
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+    });
+    res.redirect('/user/profile');
   }
 
   // @UseGuards(LocalAuthGuard)
