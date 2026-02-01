@@ -1,8 +1,7 @@
-version: '3.8'
 services:
   mongo:
-    image: mongo:latest
-    container_name: nest-mongo
+    image: mongo
+    container_name: nest-mongo-passport
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
