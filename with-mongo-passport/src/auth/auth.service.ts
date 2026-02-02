@@ -2,20 +2,26 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from 'src/user/schemas/user.schema';
-import { Model } from 'mongoose';
 
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
-    @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) { }
 
+  /**
+   * Validate a user by email and password
+   * @param email - User's email
+   * @param password - User's password
+   * @returns User object without password if validation succeeds, null otherwise
+   */
   async validateUser(email: string, password: string) {
     const user = await this.userService.findByEmail(email);
+
+    if (!user) {
+      return null;
+    }
 
     const decodedPassword = await bcrypt.compare(password, user.password);
     if (user && decodedPassword) {
@@ -29,39 +35,40 @@ export class AuthService {
     return null;
   }
 
+  /**
+   * Generate JWT token for login
+   * @param user - User object
+   * @returns Object containing access_token
+   */
   async login(user: any) {
-    const payload = { email: user.email, sub: user.id };
+    const payload = { email: user.email, sub: user.id || user._id };
     return {
       access_token: this.jwtService.sign(payload),
     };
   }
 
+  /**
+   * Handle Google Login
+   * @param req - Request object containing Google user info
+   * @returns Object containing access_token
+   * @throws Error if Google user info is missing
+   */
   async googleLogin(req): Promise<any> {
     if (!req.user) {
       throw new Error('Google login failed: No user information received.');
     }
 
     const { email, name, picture, googleId } = req.user;
-    let user = await this.userModel.findOne({ email });
+    let user = await this.userService.findByEmail(email);
 
     if (!user) {
-      user = new this.userModel({
-        email,
-        name,
-        picture,
-        googleId,
-      });
-      await user.save();
+      user = await this.userService.createFromGoogle(email, name, picture, googleId);
     }
 
-    const payload = { email: user.email };
+    const payload = { email: user.email, sub: user._id };
 
     return {
       accessToken: this.jwtService.sign(payload),
     };
   }
-
-  // async logout(user: any) {
-  //   return user;
-  // }
 }

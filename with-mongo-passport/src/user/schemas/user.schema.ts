@@ -5,7 +5,17 @@ import * as bcrypt from 'bcrypt';
 
 export type UserDocument = User & Document;
 
-@Schema()
+// Added a toJSON transformation 
+// to automatically remove the password field from all API responses.
+@Schema({
+    toJSON: {
+        transform: (doc, ret) => {
+            delete (ret as any).password;
+            return ret;
+        },
+    },
+})
+
 export class User {
     @Prop({ required: true, unique: true })
     email: string;

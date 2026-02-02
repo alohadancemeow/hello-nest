@@ -4,19 +4,24 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    // เพิ่มไว้สำหรับการอ่าน config ผ่าน .env
+    // Configuration module for .env support
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
-    MongooseModule.forRoot(`mongodb://localhost:27017`, {
-      user: 'root',
-      pass: 'example',
-      dbName: 'nest-auth',
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URI') || 'mongodb://localhost:27017',
+        user: configService.get<string>('MONGO_USER') || 'root',
+        pass: configService.get<string>('MONGO_PASS') || 'example',
+        dbName: configService.get<string>('MONGO_DB_NAME') || 'nest-auth',
+      }),
+      inject: [ConfigService],
     }),
     UserModule,
     AuthModule,

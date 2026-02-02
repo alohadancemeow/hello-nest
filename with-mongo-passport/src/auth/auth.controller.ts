@@ -7,6 +7,12 @@ import { GoogleAuthGuard } from './google-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
+  /**
+   * Login with email and password
+   * @param req - Request object containing user (injected by LocalAuthGuard)
+   * @param res - Response object to set cookie
+   * @returns JSON response with message
+   */
   @UseGuards(LocalAuthGuard)
   @Post('/login')
   async login(@Request() req, @Res({ passthrough: true }) res) {
@@ -17,25 +23,38 @@ export class AuthController {
     return { message: 'Login successful' };
   }
 
+  /**
+   * Initiate Google OAuth login
+   * The function body is empty because the GoogleAuthGuard handles the redirection to Google.
+   * GET /auth/google --> GoogleAuthGuard --> GoogleStrategy
+   * @param req - Request object
+   */
   @Get('google')
   @UseGuards(GoogleAuthGuard)
-  async googleAuth(@Request() req) {
-    // Initiates the Google OAuth process
-  }
+  async googleAuth(@Request() req) { }
 
+  /**
+   * Handle Google OAuth callback
+   * @param req - Request object containing Google user info
+   * @param res - Response object to set cookie and redirect
+   */
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Request() req, @Res({ passthrough: true }) res) {
     const { accessToken } = await this.authService.googleLogin(req);
 
-    // console.log('accessToken', accessToken);
     res.cookie('access_token', accessToken, {
       httpOnly: true,
     });
     res.redirect('/user/profile');
   }
 
-  // @UseGuards(LocalAuthGuard)
+  /**
+   * Logout user
+   * @param req - Request object
+   * @param res - Response object to clear cookie
+   * @returns JSON response with message
+   */
   @Post('/logout')
   async logout(@Request() req, @Res({ passthrough: true }) res) {
     // Clear the access_token cookie
